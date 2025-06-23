@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ping Pong Tournament</title>
+
+  <!-- Internal CSS -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+    }
+    .player-card {
+      border: 1px solid #ccc;
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏓 Ping Pong Tournament</h1>
+
+  <!-- Player Stats -->
+  <div class="player-card">
+    <strong>Player:</strong> Jess <br>
+    <strong>Power:</strong> 8 <br>
+    <strong>Speed:</strong> 6 <br>
+    <strong>Wins:</strong> 2 <br>
+    <strong>Total Points:</strong> 33
+  </div>
+
+  <!-- Match Input -->
+  <h2>Record a Match</h2>
+  <form id="matchForm">
+    Player A: <input type="text" id="playerA"><br>
+    Player B: <input type="text" id="playerB"><br>
+    Score A: <input type="number" id="scoreA"><br>
+    Score B: <input type="number" id="scoreB"><br>
+    <button type="submit">Submit Match</button>
+  </form>
+
+  <!-- JS Logic -->
+  <script>
+    document.getElementById('matchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const playerA = document.getElementById('playerA').value;
+      const playerB = document.getElementById('playerB').value;
+      const scoreA = parseInt(document.getElementById('scoreA').value);
+      const scoreB = parseInt(document.getElementById('scoreB').value);
+
+      let winner = '';
+      if (scoreA >= 11 && scoreA - scoreB >= 2) {
+        winner = playerA;
+      } else if (scoreB >= 11 && scoreB - scoreA >= 2) {
+        winner = playerB;
+      } else {
+        alert("Invalid score: Winner must have at least 11 points and a 2-point lead.");
+        return;
+      }
+
+      alert(`Winner: ${winner}`);
+    });
+  </script>
+</body>
+</html>
