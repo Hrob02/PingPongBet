@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Match History</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      text-align: center;
+      background: #3071c6;
+      padding: 40px;
+      color: #FFD700;
+    }
+    h1 {
+      font-size: 60px;
+      margin-bottom: 20px;
+      color: #FFD700;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 95%;
+      max-width: 1200px;
+    }
+    th, td {
+      border: 2px solid #FFD700;
+      padding: 12px;
+      font-size: 18px;
+      color: #FFD700;
+    }
+    th {
+      background: #1F5130;
+      color: #FFD700;
+    }
+    tr:nth-child(even) {
+      background-color: rgba(255, 215, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+  <script>
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("navbar").innerHTML = html);
+  </script>
+
+  <h1>Match History</h1>
+
+  <table id="matchTable">
+    <thead>
+      <tr id="tableHeader"></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <script>
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Matches";
+
+fetch(SHEET_URL)
+  .then(res => res.text())
+  .then(txt => {
+    const json = JSON.parse(txt.substring(47).slice(0, -2));
+    let cols = json.table.cols.map(col => col.label).slice(0, 12);
+    const rows = json.table.rows
+      .map(row => row.c.map(cell => cell ? cell.v : "").slice(0, 12))
+      .filter(row => row[0] && !row[0].toLowerCase().includes("auto-filled"));
+
+    rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+    const headerRow = document.getElementById("tableHeader");
+    cols.forEach(col => {
+      const th = document.createElement("th");
+      th.textContent = col;
+      headerRow.appendChild(th);
+    });
+
+    const body = document.getElementById("tableBody");
+    rows.forEach(row => {
+      const tr = document.createElement("tr");
+      row.forEach((cell, i) => {
+        const td = document.createElement("td");
+        if (i === 0) {
+          const date = new Date(cell);
+          td.textContent = isNaN(date) ? cell : date.toLocaleString();
+        } else {
+          td.textContent = cell;
+        }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+  })
+  .catch(err => {
+    console.error("Error loading match history:", err);
+    document.querySelector("#tableBody").innerHTML = "<tr><td colspan='12'>Failed to load match data</td></tr>";
+  });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Ping Pong Scorekeeper</title>
+<style>
+  /* ---------- GLOBAL ---------- */
+  body{font-family:Georgia,serif;text-align:center;background:#3071c6;padding:40px;color:#FFD700}
+  h1{font-size:60px;margin-bottom:20px;color:#FFD700}
+
+  /* ---------- PLAYER PICKER ---------- */
+  .player-select,.submit-btn{margin:20px 0}
+  select{padding:10px;font-size:18px;margin:0 10px;border:2px solid #FFD700;border-radius:6px;background:transparent;color:#FFD700}
+  select:hover{background:rgba(255,215,0,.7);color:#1F5130}
+  select option{color:#1F5130;background:#fff}
+
+  /* ---------- TABS ---------- */
+  .tabs{display:flex;justify-content:center;gap:8px;margin-bottom:10px}
+  .tabs button{flex:1 1 70px;padding:10px 20px;border:2px solid #FFD700;background:transparent;color:#FFD700;font-size:18px;font-family:Georgia,serif;border-radius:6px;cursor:pointer;transition:all .2s ease-in-out}
+  .tabs button:hover:not(.active){background:rgba(255,215,0,.7);color:#1F5130}
+  .tabs button.active{background:#FFD700;color:#1F5130}
+  .tabs button:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ---------- MATCH BOX ---------- */
+  .match-box{position:relative;max-width:500px;margin:20px auto;background:#3071c6;padding:20px;border-radius:10px;border:2px solid #FFD700;color:#FFD700;transition:opacity 0.2s ease}
+  .match-box.dimmed .score-display input,
+  .match-box.dimmed .score-controls button {
+    pointer-events: none;
+    opacity: 0.3;
+  }
+  .match-box.dimmed .score-display input:focus {
+    outline: none;
+  }
+
+  .winner-banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,215,0,.7);color:#1F5130;border-radius:10px;visibility:hidden;z-index:3}
+  .score-display{font-size:26px;margin:10px 0;position:relative;z-index:1}
+  .score-display input {width: 60px;text-align: center;font-size: 26px;border: none;background: transparent;color: #FFD700;appearance: textfield; /* Ensures all spinners are removed on modern browsers */padding: 4px 0; /* Optional: vertical centering tweak */}
+  .score-display input::-webkit-outer-spin-button,.score-display input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .score-display input[type=number]{-moz-appearance:textfield}
+
+  .score-controls{position:relative;z-index:1}
+  .score-controls button{padding:10px 16px;margin:0 4px;font-size:16px;cursor:pointer;background:transparent;border:2px solid #FFD700;border-radius:6px;color:#FFD700;font-family:Georgia,serif;transition:all .2s ease}
+  .score-controls button:hover:not(:disabled){background:rgba(255,215,0,.7);color:#1F5130}
+  .score-controls button:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ---------- ROUNDS LOG ---------- */
+  .rounds-log{max-width:500px;margin:0 auto;text-align:left;color:#FFD700}
+  .rounds-log div{margin:4px}
+
+  /* ---------- SUBMIT BUTTON ---------- */
+  .submit-btn button{padding:12px 24px;font-size:18px;border:2px solid #FFD700;border-radius:6px;background:transparent;color:#FFD700;font-family:Georgia,serif;cursor:pointer;transition:all .2s ease}
+  .submit-btn button:hover:not(:disabled){background:rgba(255,215,0,.7);color:#1F5130}
+  .submit-btn button:disabled{opacity:.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+    <div id="navbar"></div>
+<script>
+fetch('nav.html')
+  .then(r=>r.text())
+  .then(html=>document.getElementById('navbar').innerHTML = html);
+</script>
+
+<h1> Ping Pong Scorekeeper</h1>
+<div class="player-select">
+  <label>Player A:
+    <select id="playerA" onchange="playerChosen()"></select>
+  </label>
+  <label>Player B:
+    <select id="playerB" onchange="playerChosen()"></select>
+  </label>
+</div>
+
+<div class="tabs" id="roundTabs"></div>
+
+<div class="match-box" id="matchBox">
+  <div class="winner-banner" id="winnerBanner"></div>
+  <div class="score-display">
+    <input type="number" id="scoreA" value="0" min="0" oninput="manualEdit()"> : 
+    <input type="number" id="scoreB" value="0" min="0" oninput="manualEdit()">
+  </div>
+  <div class="score-controls">
+    <button id="btnAUp"   onclick="changeScore('A',1)">+ A</button>
+    <button id="btnADown" onclick="changeScore('A',-1)">- A</button>
+    <button id="btnBUp"   onclick="changeScore('B',1)">+ B</button>
+    <button id="btnBDown" onclick="changeScore('B',-1)">- B</button>
+  </div>
+</div>
+
+<div class="rounds-log" id="roundsLog"><h3>Rounds</h3></div>
+<div class="submit-btn"><button id="submitBtn" disabled onclick="submitMatch()">Submit Match</button></div>
+
+<script>
+const MAX_ROUNDS=5;
+let currentRound=1;
+let rounds=Array(MAX_ROUNDS).fill(null);
+let scoreA=0,scoreB=0;
+let winsA=0,winsB=0;
+let submitted=false;
+
+const tabsContainer=document.getElementById('roundTabs');
+for(let i=1;i<=MAX_ROUNDS;i++){
+  const btn=document.createElement('button');
+  btn.id=`tab${i}`;
+  btn.textContent=`Round ${i}`;
+  btn.onclick=()=>switchRound(i);
+  if(i===1)btn.classList.add('active');
+  tabsContainer.appendChild(btn);
+}
+setControlsEnabled(false);
+fetchPlayers();
+
+async function fetchPlayers(){
+  const url='https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Players';
+  try{
+    const txt=await fetch(url).then(r=>r.text());
+    const names=JSON.parse(txt.substring(47).slice(0,-2)).table.rows.map(r=>r.c[0]?.v).filter(Boolean);
+    ['playerA','playerB'].forEach(id=>{
+      const sel=document.getElementById(id);
+      sel.innerHTML='<option value="">--Select--</option>';
+      names.forEach(n=>sel.insertAdjacentHTML('beforeend',`<option>${n}</option>`));
+    });
+  }catch(e){console.error('Fetch players failed',e)}
+}
+function playerChosen(){
+  const ready=getPlayer('A')&&getPlayer('B')&&getPlayer('A')!==getPlayer('B');
+  setControlsEnabled(ready);
+  updateSubmitState();
+}
+function setControlsEnabled(en){
+  ['btnAUp','btnADown','btnBUp','btnBDown','scoreA','scoreB'].forEach(id=>document.getElementById(id).disabled=!en);
+}
+function getPlayer(side){return document.getElementById('player'+side).value;}
+
+function switchRound(n){
+  currentRound=n;
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.id===`tab${n}`));
+  const prev=rounds[n-1];
+  if(prev){[scoreA,scoreB]=prev.split(':').map(Number);}else{scoreA=scoreB=0;}
+  updateInputs();
+  setControlsEnabled(true);
+  document.getElementById('winnerBanner').style.visibility='hidden';
+  document.getElementById('matchBox').classList.remove('dimmed');
+  submitted=false;
+  updateSubmitState();
+}
+function updateInputs(){
+  document.getElementById('scoreA').value=scoreA;
+  document.getElementById('scoreB').value=scoreB;
+}
+function changeScore(side,delta){
+  if(side==='A')scoreA=Math.max(0,scoreA+delta);
+  else scoreB=Math.max(0,scoreB+delta);
+  updateInputs(); validateRound();
+}
+function manualEdit(){
+  scoreA=parseInt(document.getElementById('scoreA').value)||0;
+  scoreB=parseInt(document.getElementById('scoreB').value)||0;
+  validateRound();
+}
+function validateRound(){
+  const finished=isWin(scoreA,scoreB);
+  rounds[currentRound-1]=finished?`${scoreA}:${scoreB}`:null;
+  recalcWins();
+  refreshLog();
+  updateWinnerBanner();
+  updateSubmitState();
+  if(finished && currentRound < MAX_ROUNDS && winsA < 3 && winsB < 3){
+    switchRound(currentRound + 1);
+  }
+}
+function isWin(a,b){return ((a>=11||b>=11)&&Math.abs(a-b)>=2);}
+function recalcWins(){winsA=winsB=0;rounds.forEach(r=>{if(r){const[a,b]=r.split(':').map(Number);a>b?winsA++:winsB++;}});}
+function refreshLog(){
+  const c=document.getElementById('roundsLog');c.innerHTML='<h3>Rounds</h3>';
+  rounds.forEach((r,i)=>{if(r)c.insertAdjacentHTML('beforeend',`<div>Round ${i+1}:  ${r}</div>`);});
+}
+function updateWinnerBanner(){
+  const banner=document.getElementById('winnerBanner');
+  const box=document.getElementById('matchBox');
+  if(winsA===3||winsB===3){
+    banner.textContent=`${winsA===3?getPlayer('A'):getPlayer('B')} wins the match!`;
+    banner.style.visibility='visible';
+    box.classList.add('dimmed');
+  }else{
+    banner.style.visibility='hidden';
+    box.classList.remove('dimmed');
+  }
+}
+function updateSubmitState(){
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=submitted?true:!(winsA===3||winsB===3);
+}
+function submitMatch() {
+  // Keep the current string rounds, or fill with empty strings
+  const formattedRounds = rounds.map(r => r || "");
+  while (formattedRounds.length < 5) {
+    formattedRounds.push("");
+  }
+
+  // Add timestamp for verification
+  const timestamp = new Date().toLocaleString(); // e.g., "25/06/2025, 15:00:46"
+
+  const data = {
+    playerA: getPlayer('A'),
+    playerB: getPlayer('B'),
+    rounds: formattedRounds,
+    winner: winsA === 3 ? getPlayer('A') : winsB === 3 ? getPlayer('B') : '',
+    winnerRounds: Math.max(winsA, winsB),
+    loserRounds: Math.min(winsA, winsB),
+    timestamp // for verification
+  };
+
+  // Show status to user
+  let statusDiv = document.getElementById('submitStatus');
+  if (!statusDiv) {
+    statusDiv = document.createElement('div');
+    statusDiv.id = 'submitStatus';
+    statusDiv.style = "margin-top:10px;min-height:24px;font-size:18px;";
+    document.querySelector('.submit-btn').after(statusDiv);
+  }
+  statusDiv.textContent = "⏳ Submission sent! Awaiting verification...";
+  statusDiv.style.color = "#FFD700";
+
+  fetch("https://script.google.com/macros/s/AKfycbzv5Wnfyl7qRSFNH3tLDWUfDWxhELEWrzCqKWKYMw9Oi-YndfJOyYsSxA6DWJsxwYH4/exec", {
+    redirect: "follow",
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(data)
+  })
+  .catch(() => {
+    // Ignore POST errors (including CORS)
+  })
+  .finally(() => {
+    setTimeout(() => {
+      const sheetUrl = 'https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Matches';
+      fetch(sheetUrl)
+        .then(r => r.text())
+        .then(txt => {
+          const json = JSON.parse(txt.substring(47).slice(0, -2));
+          const rows = json.table.rows;
+          // Helper: parse "25/06/2025 15:00:46" or Google Date string to Date object
+          function parseSheetDate(c) {
+            if (!c[0]) return null;
+            if (c[0].f) {
+              // "25/06/2025 15:00:46"
+              const [d, m, y, h, mi, s] = c[0].f.match(/\d+/g).map(Number);
+              return new Date(y, m - 1, d, h, mi, s);
+            }
+            if (typeof c[0].v === "string" && c[0].v.startsWith("Date(")) {
+              // "Date(2025,5,25,15,0,45)"
+              const [y, m, d, h, mi, s] = c[0].v.match(/\d+/g).map(Number);
+              return new Date(y, m, d, h, mi, s);
+            }
+            return null;
+          }
+          // Parse our JS timestamp (from .toLocaleString()) to Date object
+          function parseLocalTimestamp(ts) {
+            // "25/06/2025, 15:00:46"
+            const [date, time] = ts.split(',');
+            if (!date || !time) return null;
+            const [d, m, y] = date.trim().split('/').map(Number);
+            const [h, mi, s] = time.trim().split(':').map(Number);
+            return new Date(y, m - 1, d, h, mi, s);
+          }
+          const sentDate = parseLocalTimestamp(timestamp);
+          let found = false;
+          for (const row of rows) {
+            const c = row.c;
+            if (!c) continue;
+            const rowA = c[1]?.v || "";
+            const rowB = c[2]?.v || "";
+            const rowWinner = c[8]?.v || "";
+            const rowDate = parseSheetDate(c);
+            if (
+              rowA === data.playerA &&
+              rowB === data.playerB &&
+              rowWinner === data.winner &&
+              rowDate && sentDate &&
+              Math.abs(rowDate.getTime() - sentDate.getTime()) <= 15000 // within 15 seconds
+            ) {
+              found = true;
+              break;
+            }
+          }
+          if (found) {
+            statusDiv.textContent = "Match Submmission Verified!";
+            statusDiv.style.color = "#FFD700";
+          } else {
+            statusDiv.textContent = "⚠️ Submission might have failed — could not verify.";
+            statusDiv.style.color = "#FFD700";
+          }
+        })
+        .catch(() => {
+          statusDiv.textContent = "⚠️ Submission sent, but could not verify in spreadsheet.";
+          statusDiv.style.color = "#FFD700";
+        });
+    }, 1000);
+  });
+}
+
+</script>
+</body>
+</html>

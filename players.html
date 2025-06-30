@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Player Stats</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      text-align: center;
+      background: #3071c6;
+      padding: 40px;
+      color: #FFD700;
+    }
+    h1 {
+      font-size: 60px;
+      margin-bottom: 20px;
+      color: #FFD700;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 90%;
+      max-width: 800px;
+    }
+    th, td {
+      border: 2px solid #FFD700;
+      padding: 12px;
+      font-size: 18px;
+      color: #FFD700;
+    }
+    th {
+      background: #1F5130;
+      color: #FFD700;
+    }
+    tr:nth-child(even) {
+      background-color: rgba(255, 215, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+    <div id="navbar"></div>
+<script>
+fetch('nav.html')
+  .then(r=>r.text())
+  .then(html=>document.getElementById('navbar').innerHTML = html);
+</script>
+
+  <h1>Player Stats</h1>
+  <table id="statsTable">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Name</th>
+        <th>Games Played</th>
+        <th>Games Won</th>
+        <th>Rounds Won</th>
+        <th>Points Total</th>
+        <th>Performance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Player rows will be inserted here -->
+    </tbody>
+  </table>
+
+  <script>
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Players';
+
+    fetch(SHEET_URL)
+      .then(res => res.text())
+      .then(txt => {
+        const json = JSON.parse(txt.substring(47).slice(0, -2));
+        const rows = json.table.rows.map(r => r.c.map(c => c?.v ?? ""));
+        
+        // Get header indices
+        const headers = json.table.cols.map(c => c.label);
+        const nameIdx = headers.indexOf("Name");
+        const gpIdx = headers.indexOf("Games Played");
+        const gwIdx = headers.indexOf("Games Won");
+        const rwIdx = headers.indexOf("Rounds Won");
+        const ptIdx = headers.indexOf("Points");
+        const perfIdx = headers.indexOf("Player Stats");
+
+        const players = rows
+          .filter(r => r[nameIdx])
+          .map(r => ({
+            name: r[nameIdx],
+            gamesPlayed: r[gpIdx],
+            gamesWon: r[gwIdx],
+            roundsWon: r[rwIdx],
+            points: r[ptIdx],
+            performance: parseFloat(r[perfIdx] || 0)
+          }))
+          .sort((a, b) => b.performance - a.performance);
+
+        const tbody = document.querySelector("#statsTable tbody");
+        players.forEach((p, i) => {
+          const row = `<tr>
+            <td>${i + 1}</td>
+            <td>${p.name}</td>
+            <td>${p.gamesPlayed}</td>
+            <td>${p.gamesWon}</td>
+            <td>${p.roundsWon}</td>
+            <td>${p.points}</td>
+            <td>${(p.performance).toFixed(2)}</td>
+          </tr>`;
+          tbody.insertAdjacentHTML("beforeend", row);
+        });
+      })
+      .catch(err => {
+        console.error("Failed to fetch stats:", err);
+        document.querySelector("#statsTable tbody").innerHTML = "<tr><td colspan='7'>Failed to load stats</td></tr>";
+      });
+  </script>
+</body>
+</html>

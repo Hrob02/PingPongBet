@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SoftWire Table Tennis Competition 2025</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      text-align: center;
+      background: #3071c6;
+      color: #FFD700;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin-bottom: 40px;
+      color: #FFD700;
+    }
+
+    .bracket {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      flex-wrap: nowrap;
+      gap: 40px;
+    }
+
+    .round {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+    }
+
+    .match {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      background-color: #1F5130;
+      border: 2px solid #FFD700;
+      padding: 10px 20px;
+      border-radius: 5px;
+      width: 150px;
+      height: 60px;
+      margin: 10px 0;
+    }
+
+    .match select, .match option {
+      background-color: #1F5130;
+      color: #FFD700;
+      border: 1px solid #FFD700;
+      font-family: Georgia, serif;
+      font-size: 16px;
+    }
+
+    #navbar {
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+  <script>
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => document.getElementById("navbar").innerHTML = html);
+  </script>
+
+  <h1>SoftWire Table Tennis Competition 2025</h1>
+  <div class="bracket">
+    <!-- Round 1 (Left) -->
+    <div class="round">
+      <div class="match">Nathaniel</div>
+      <div class="match">Richard</div>
+      <div class="match">Hallie</div>
+      <div class="match">Kevin</div>
+      <div class="match">Greg</div>
+      <div class="match">Jacob</div>
+      <div class="match">Jimmy</div>
+      <div class="match">Avish</div>
+    </div>
+    <!-- Round 2 (Left) -->
+    <div class="round">
+      <div class="match"></div>
+      <div class="match"></div>
+      <div class="match"></div>
+      <div class="match"></div>
+    </div>
+    <!-- Round 3 (Left) -->
+    <div class="round">
+      <div class="match"></div>
+      <div class="match"></div>
+    </div>
+    <!-- Final -->
+    <div class="round">
+      <div class="match"></div>
+    </div>
+    <!-- Round 3 (Right) -->
+    <div class="round">
+      <div class="match"></div>
+      <div class="match"></div>
+    </div>
+    <!-- Round 2 (Right) -->
+    <div class="round">
+      <div class="match"></div>
+      <div class="match"></div>
+      <div class="match"></div>
+      <div class="match"></div>
+    </div>
+    <!-- Round 1 (Right) -->
+    <div class="round">
+      <div class="match">Ben</div>
+      <div class="match">Lohitha</div>
+      <div class="match">Casey</div>
+      <div class="match">Alex</div>
+      <div class="match">
+        <div>Best of the rest #1:</div>
+        <select>
+          <option>Select...</option>
+        </select>
+      </div>
+      <div class="match">
+        <div>Best of the rest #2:</div>
+        <select>
+          <option>Select...</option>
+        </select>
+      </div>
+      <div class="match">Liam</div>
+      <div class="match">Chris</div>
+    </div>
+  </div>
+</body>
+</html>

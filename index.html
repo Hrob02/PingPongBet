@@ -3,69 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <title>Ping Pong Tournament</title>
-
-  <!-- Internal CSS -->
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f7f7f7;
-    }
-    h1 {
+      font-family: Georgia, serif;
+      background-color: #3071c6;
       text-align: center;
+      padding: 60px;
+      color: #FFD700;
     }
-    .player-card {
-      border: 1px solid #ccc;
-      background: white;
-      padding: 15px;
-      margin-bottom: 10px;
+
+    h1 {
+      font-size: 60px;
+      margin-bottom: 20px;
+      color: #FFD700;
+    }
+
+    p {
+      font-size: 20px;
+      margin-bottom: 40px;
+    }
+
+    .nav-button {
+      display: inline-block;
+      padding: 16px 32px;
+      margin: 12px;
+      font-size: 18px;
+      text-decoration: none;
+      background: transparent;
+      border: 2px solid #FFD700;
       border-radius: 8px;
+      color: #FFD700;
+      font-family: Georgia, serif;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .nav-button:hover {
+      background: rgba(255, 215, 0, 0.7);
+      color: #1F5130;
     }
   </style>
 </head>
 <body>
-  <h1>🏓 Ping Pong Tournament</h1>
 
-  <!-- Player Stats -->
-  <div class="player-card">
-    <strong>Player:</strong> Jess <br>
-    <strong>Power:</strong> 8 <br>
-    <strong>Speed:</strong> 6 <br>
-    <strong>Wins:</strong> 2 <br>
-    <strong>Total Points:</strong> 33
-  </div>
+  <h1>Ping Pong Showdown</h1>
+  <p>Welcome to the ultimate tournament hub. Choose your arena:</p>
 
-  <!-- Match Input -->
-  <h2>Record a Match</h2>
-  <form id="matchForm">
-    Player A: <input type="text" id="playerA"><br>
-    Player B: <input type="text" id="playerB"><br>
-    Score A: <input type="number" id="scoreA"><br>
-    Score B: <input type="number" id="scoreB"><br>
-    <button type="submit">Submit Match</button>
-  </form>
+  <a href="players.html" class="nav-button">Player Stats</a>
+  <a href="scorekeeper.html" class="nav-button">Score Recording</a>
+  <a href="leaderboard.html" class="nav-button">leaderboard</a>
+  <a href="match-records.html" class="nav-button">Match Records</a>
 
-  <!-- JS Logic -->
-  <script>
-    document.getElementById('matchForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const playerA = document.getElementById('playerA').value;
-      const playerB = document.getElementById('playerB').value;
-      const scoreA = parseInt(document.getElementById('scoreA').value);
-      const scoreB = parseInt(document.getElementById('scoreB').value);
-
-      let winner = '';
-      if (scoreA >= 11 && scoreA - scoreB >= 2) {
-        winner = playerA;
-      } else if (scoreB >= 11 && scoreB - scoreA >= 2) {
-        winner = playerB;
-      } else {
-        alert("Invalid score: Winner must have at least 11 points and a 2-point lead.");
-        return;
-      }
-
-      alert(`Winner: ${winner}`);
-    });
-  </script>
 </body>
 </html>
