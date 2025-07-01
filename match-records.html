@@ -63,7 +63,7 @@ fetch(SHEET_URL)
     const json = JSON.parse(txt.substring(47).slice(0, -2));
     let cols = json.table.cols.map(col => col.label).slice(0, 12);
     const rows = json.table.rows
-      .map(row => row.c.map(cell => cell ? cell.v : "").slice(0, 12))
+      .map(row => row.c.map(cell => cell ? (cell.f || cell.v) : "").slice(0, 12))
       .filter(row => row[0] && !row[0].toLowerCase().includes("auto-filled"));
 
     rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
