@@ -226,6 +226,110 @@
     .bracket-2026 .match div {
       line-height: 1.15;
     }
+
+    .format-note {
+      max-width: 960px;
+      margin: 0 auto 20px;
+      padding: 14px 18px;
+      background: #1F5130;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      font-size: 15px;
+      line-height: 1.4;
+      text-align: left;
+    }
+
+    .groups-wrap {
+      max-width: 1020px;
+      margin: 0 auto 28px;
+    }
+
+    .group-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .group-card {
+      background: #1F5130;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .group-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #FFD700;
+    }
+
+    .group-card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .group-card li {
+      margin: 2px 0;
+    }
+
+    .group-fixtures {
+      margin-top: 8px;
+      font-size: 13px;
+      opacity: 0.9;
+      border-top: 1px solid rgba(255, 215, 0, 0.35);
+      padding-top: 7px;
+      line-height: 1.3;
+    }
+
+    .knockout-wrap {
+      margin-top: 10px;
+    }
+
+    .bracket-2026 {
+      gap: 18px;
+      transform: scale(0.95);
+      margin: -4px auto -18px;
+    }
+
+    .bracket-2026 .match {
+      width: 140px;
+      height: 52px;
+    }
+
+    .bracket-2026 .round-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .group-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .bracket-2026 {
+        transform: scale(0.9);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .group-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bracket-2026 {
+        transform: none;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 8px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -310,78 +414,113 @@
   </div>
 
   <div id="view2026" class="hidden">
-    <div class="bracket bracket-2026">
+    <div class="format-note">
+      <strong>2026 Format:</strong> 6 groups of 3 players. In each group, everyone plays everyone once (2 games per player).
+      Group winner advances. Then the 2 best non-winning players across all groups (BoTR #1 and BoTR #2) also advance.
+      That makes 8 players for knockout.
+    </div>
 
-      <!-- Left R1 (5 games / 10 slots) -->
-      <div class="round">
-        <div class="match">Kevin Lin</div>
-        <div class="match">Avish Chand</div>
-        <div class="match">Richard Gan</div>
-        <div class="match">Casey Luo</div>
-        <div class="match">Nathaniel Fallow</div>
-        <div class="match">Alex McKie</div>
-        <div class="match">Hallie Robins</div>
-        <div class="match">Ben Klapaukh</div>
-        <div class="match">Chris Todd</div>
-        <div class="match">Aditya Kumar</div>
-      </div>
+    <div class="groups-wrap">
+      <h2 class="section-title">Group Stage</h2>
+      <div class="group-grid">
+        <div class="group-card">
+          <h3>Group A</h3>
+          <ul>
+            <li>Hallie Robins</li>
+            <li>Charles Fawcett</li>
+            <li>Richard Gan</li>
+          </ul>
+        </div>
 
-      <!-- Left R2 (5 slots) -->
-      <div class="round">
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-      </div>
+        <div class="group-card">
+          <h3>Group B</h3>
+          <ul>
+            <li>Aditya Kumar</li>
+            <li>Ben Klapaukh</li>
+            <li>Kevin Lin</li>
+          </ul>
+        </div>
 
-      <!-- Left SF (2 slots) -->
-      <div class="round">
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-      </div>
+        <div class="group-card">
+          <h3>Group C</h3>
+          <ul>
+            <li>Amir Golshani</li>
+            <li>Nathaniel Fallow</li>
+            <li>Chris Todd</li>
+          </ul>
+        </div>
 
-      <!-- Final -->
-      <div class="round">
-        <div class="match">
-          <div>TBD</div>
-          <div>VS...</div>
+        <div class="group-card">
+          <h3>Group D</h3>
+          <ul>
+            <li>Alex McKie</li>
+            <li>Avish Chand</li>
+            <li>Casey Luo</li>
+          </ul>
+        </div>
+
+        <div class="group-card">
+          <h3>Group E</h3>
+          <ul>
+            <li>Nicolò Sala</li>
+            <li>Ben Kernohan</li>
+            <li>Alex Gomez</li>
+          </ul>
+        </div>
+
+        <div class="group-card">
+          <h3>Group F</h3>
+          <ul>
+            <li>Aydin Kilic</li>
+            <li>Nhu Dinh</li>
+            <li>Eric O'Donnell</li>
+          </ul>
         </div>
       </div>
+    </div>
 
-      <!-- Right SF (2 slots) -->
-      <div class="round">
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-      </div>
+    <div class="knockout-wrap">
+      <h2 class="section-title">Knockout Stage (8 Players)</h2>
+      <div class="bracket bracket-2026">
 
-      <!-- Right R2 (5 slots) -->
-      <div class="round">
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-        <div class="match">TBD</div>
-      </div>
-
-      <!-- Right R1 (5 games / 10 slots — last game is BoTR) -->
-      <div class="round">
-        <div class="match">Amir Golshani</div>
-        <div class="match">Ben Kernohan</div>
-        <div class="match">Charles Fawcett</div>
-        <div class="match">Nicolò Sala</div>
-        <div class="match">Alex Gomez</div>
-        <div class="match">Aydin Kilic</div>
-        <div class="match">Nhu Dinh</div>
-        <div class="match">Eric O'Donnell</div>
-        <div class="match">
-          <div>BoTR #1</div>
+        <!-- Quarter Finals (Left Half) -->
+        <div class="round">
+          <div class="match">BoTR #1</div>
+          <div class="match">BoTR #2</div>
+          <div class="match">Winner Group A</div>
+          <div class="match">Winner Group D</div>
         </div>
-        <div class="match">
-          <div>BoTR #2</div>
-        </div>
-      </div>
 
+        <!-- Semi Final (Left) -->
+        <div class="round">
+          <div class="match">QF1 Winner</div>
+          <div class="match">QF2 Winner</div>
+        </div>
+
+        <!-- Final -->
+        <div class="round">
+          <div class="match">
+            <div>SF1 Winner</div>
+            <div>VS...</div>
+            <div>SF2 Winner</div>
+          </div>
+        </div>
+
+        <!-- Semi Final (Right) -->
+        <div class="round">
+          <div class="match">QF3 Winner</div>
+          <div class="match">QF4 Winner</div>
+        </div>
+
+        <!-- Quarter Finals (Right Half) -->
+        <div class="round">
+          <div class="match">Winner Group B</div>
+          <div class="match">Winner Group E</div>
+          <div class="match">Winner Group C</div>
+          <div class="match">Winner Group F</div>
+        </div>
+
+      </div>
     </div>
   </div>
 
