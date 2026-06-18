@@ -18,6 +18,29 @@
       color: #FFD700;
     }
 
+    .controls {
+      margin: 0 auto 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+    }
+
+    .controls select {
+      padding: 8px 10px;
+      font-size: 16px;
+      border: 2px solid #FFD700;
+      border-radius: 6px;
+      background: transparent;
+      color: #FFD700;
+      font-family: Georgia, serif;
+    }
+
+    .controls select option {
+      color: #1F5130;
+    }
+
     .bracket {
       display: flex;
       justify-content: center;
@@ -57,6 +80,37 @@
     #navbar {
       margin-bottom: 30px;
     }
+
+    .hidden {
+      display: none;
+    }
+
+    .enrolled-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #1F5130;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .enrolled-wrap h2 {
+      margin-top: 0;
+    }
+
+    .enrolled-list {
+      text-align: left;
+      columns: 2;
+      column-gap: 30px;
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    @media (max-width: 720px) {
+      .enrolled-list {
+        columns: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -68,6 +122,15 @@
   </script>
 
   <h1>SoftWire Table Tennis Competition 2025</h1>
+  <div class="controls">
+    <label for="yearSelect">Tournament Year:</label>
+    <select id="yearSelect">
+      <option value="2025">2025</option>
+      <option value="2026">2026</option>
+    </select>
+  </div>
+
+  <div id="view2025">
   <div class="bracket">
     <!-- Round 1 (Left) -->
     <div class="round">
@@ -95,8 +158,9 @@
     <!-- Final -->
     <div class="round">
       <div class="match">
-      <div>Avish</div>
+        <div>Avish</div>
         <div>VS...</div>
+      </div>
     </div>
     <!-- Round 3 (Right) -->
     <div class="round">
@@ -128,5 +192,54 @@
       <div class="match">Chris</div>
     </div>
   </div>
+  </div>
+
+  <div id="view2026" class="hidden enrolled-wrap">
+    <h2>2026 Enrolled Players</h2>
+    <ol class="enrolled-list">
+      <li>Hallie Robins</li>
+      <li>Charles Fawcett</li>
+      <li>Richard Gan</li>
+      <li>Aditya Kumar</li>
+      <li>Ben Klapaukh</li>
+      <li>Kevin Lin</li>
+      <li>Amir Golshani</li>
+      <li>Nathaniel Fallow</li>
+      <li>Chris Todd</li>
+      <li>Alex McKie</li>
+      <li>Avish Chand</li>
+      <li>Casey Luo</li>
+      <li>Nicolò Sala</li>
+      <li>Ben Kernohan</li>
+      <li>Alex Gomez</li>
+      <li>Aydin Kilic</li>
+      <li>Nhu Dinh</li>
+      <li>Eric O'Donnell</li>
+    </ol>
+  </div>
+
+  <script>
+    const yearSelect = document.getElementById('yearSelect');
+    const view2025 = document.getElementById('view2025');
+    const view2026 = document.getElementById('view2026');
+    const title = document.querySelector('h1');
+    const currentYear = String(new Date().getFullYear());
+
+    if ([...yearSelect.options].some(option => option.value === currentYear)) {
+      yearSelect.value = currentYear;
+    }
+
+    function applyYearView() {
+      const is2026 = yearSelect.value === '2026';
+      view2025.classList.toggle('hidden', is2026);
+      view2026.classList.toggle('hidden', !is2026);
+      title.textContent = is2026
+        ? 'SoftWire Table Tennis Competition 2026'
+        : 'SoftWire Table Tennis Competition 2025';
+    }
+
+    yearSelect.addEventListener('change', applyYearView);
+    applyYearView();
+  </script>
 </body>
 </html>

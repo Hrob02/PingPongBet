@@ -10,6 +10,7 @@
 
   /* ---------- PLAYER PICKER ---------- */
   .player-select,.submit-btn{margin:20px 0}
+  .year-select{margin:10px 0 20px}
   select{padding:10px;font-size:18px;margin:0 10px;border:2px solid #FFD700;border-radius:6px;background:transparent;color:#FFD700}
   select:hover{background:rgba(255,215,0,.7);color:#1F5130}
   select option{color:#1F5130;background:#fff}
@@ -62,6 +63,14 @@ fetch('nav.html')
 </script>
 
 <h1> Ping Pong Scorekeeper</h1>
+<div class="year-select">
+  <label>Tournament Year:
+    <select id="yearSelect" onchange="yearChanged()">
+      <option value="2025">2025</option>
+      <option value="2026">2026</option>
+    </select>
+  </label>
+</div>
 <div class="player-select">
   <label>Player A:
     <select id="playerA" onchange="playerChosen()"></select>
@@ -92,6 +101,34 @@ fetch('nav.html')
 
 <script>
 const MAX_ROUNDS=5;
+const PLAYERS_URL='https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Players';
+const ENROLLED_2026 = [
+  'Hallie Robins',
+  'Charles Fawcett',
+  'Richard Gan',
+  'Aditya Kumar',
+  'Ben Klapaukh',
+  'Kevin Lin',
+  'Amir Golshani',
+  'Nathaniel Fallow',
+  'Chris Todd',
+  'Alex McKie',
+  'Avish Chand',
+  'Casey Luo',
+  'Nicolò Sala',
+  'Ben Kernohan',
+  'Alex Gomez',
+  'Aydin Kilic',
+  'Nhu Dinh',
+  'Eric O\'Donnell'
+];
+const currentYear = String(new Date().getFullYear());
+const yearSelectEl = document.getElementById('yearSelect');
+
+if ([...yearSelectEl.options].some(option => option.value === currentYear)) {
+  yearSelectEl.value = currentYear;
+}
+
 let currentRound=1;
 let rounds=Array(MAX_ROUNDS).fill(null);
 let scoreA=0,scoreB=0;
@@ -110,16 +147,44 @@ for(let i=1;i<=MAX_ROUNDS;i++){
 setControlsEnabled(false);
 fetchPlayers();
 
+function yearChanged(){
+  document.getElementById('playerA').value='';
+  document.getElementById('playerB').value='';
+  resetMatchState();
+  fetchPlayers();
+}
+
+function resetMatchState(){
+  currentRound=1;
+  rounds=Array(MAX_ROUNDS).fill(null);
+  scoreA=0;
+  scoreB=0;
+  winsA=0;
+  winsB=0;
+  submitted=false;
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.id==='tab1'));
+  updateInputs();
+  refreshLog();
+  updateWinnerBanner();
+  updateSubmitState();
+}
+
 async function fetchPlayers(){
-  const url='https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Players';
+  const selectedYear=document.getElementById('yearSelect').value;
   try{
-    const txt=await fetch(url).then(r=>r.text());
-    const names=JSON.parse(txt.substring(47).slice(0,-2)).table.rows.map(r=>r.c[0]?.v).filter(Boolean);
+    let names=[];
+    if(selectedYear==='2026'){
+      names=[...ENROLLED_2026];
+    }else{
+      const txt=await fetch(PLAYERS_URL).then(r=>r.text());
+      names=JSON.parse(txt.substring(47).slice(0,-2)).table.rows.map(r=>r.c[0]?.v).filter(Boolean);
+    }
     ['playerA','playerB'].forEach(id=>{
       const sel=document.getElementById(id);
       sel.innerHTML='<option value="">--Select--</option>';
       names.forEach(n=>sel.insertAdjacentHTML('beforeend',`<option>${n}</option>`));
     });
+    playerChosen();
   }catch(e){console.error('Fetch players failed',e)}
 }
 function playerChosen(){
@@ -202,6 +267,7 @@ function submitMatch() {
   const timestamp = new Date().toLocaleString(); // e.g., "25/06/2025, 15:00:46"
 
   const data = {
+    year: document.getElementById('yearSelect').value,
     playerA: getPlayer('A'),
     playerB: getPlayer('B'),
     rounds: formattedRounds,
