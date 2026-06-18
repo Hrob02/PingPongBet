@@ -256,6 +256,86 @@ function updateSubmitState(){
   const btn=document.getElementById('submitBtn');
   btn.disabled=submitted?true:!(winsA===3||winsB===3);
 }
+
+function formatIsoTimestamp(date) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function parseSheetDate(cell) {
+  if (!cell) return null;
+
+  if (cell.f) {
+    const formatted = String(cell.f).trim();
+    const dmY = formatted.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (dmY) {
+      const [, d, m, y, h = '0', mi = '0', s = '0'] = dmY;
+      return new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(mi), Number(s));
+    }
+  }
+
+  if (typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
+    const parts = cell.v.match(/\d+/g);
+    if (!parts || parts.length < 3) return null;
+    const [y, m, d, h = 0, mi = 0, s = 0] = parts.map(Number);
+    return new Date(y, m, d, h, mi, s);
+  }
+
+  const fallback = new Date(cell.v);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function parseRoundScore(value) {
+  if (!value || typeof value !== 'string' || !value.includes(':')) return null;
+  const [a, b] = value.split(':').map(Number);
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  return `${a}:${b}`;
+}
+
+async function verifySubmission(data, sentAt) {
+  const sheetUrl = 'https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Matches';
+  const maxAttempts = 8;
+  const delayMs = 1500;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const responseText = await fetch(sheetUrl).then(r => r.text());
+    const json = JSON.parse(responseText.substring(47).slice(0, -2));
+    const rows = json.table.rows || [];
+
+    const found = rows.some(row => {
+      const c = row.c || [];
+      const rowA = c[1]?.v || '';
+      const rowB = c[2]?.v || '';
+      const rowWinner = c[8]?.v || '';
+      const rowDate = parseSheetDate(c[0]);
+
+      if (rowA !== data.playerA || rowB !== data.playerB || rowWinner !== data.winner || !rowDate) {
+        return false;
+      }
+
+      const timeDelta = Math.abs(rowDate.getTime() - sentAt.getTime());
+      if (timeDelta > 120000) {
+        return false;
+      }
+
+      const rowRounds = [3, 4, 5, 6, 7].map(index => parseRoundScore(c[index]?.v || '') || '');
+      const expectedRounds = data.rounds.map(score => parseRoundScore(score) || '');
+
+      return rowRounds.every((score, index) => score === expectedRounds[index]);
+    });
+
+    if (found) {
+      return true;
+    }
+
+    if (attempt < maxAttempts - 1) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  return false;
+}
+
 function submitMatch() {
   // Keep the current string rounds, or fill with empty strings
   const formattedRounds = rounds.map(r => r || "");
@@ -263,8 +343,8 @@ function submitMatch() {
     formattedRounds.push("");
   }
 
-  // Add timestamp for verification
-  const timestamp = new Date().toLocaleString(); // e.g., "25/06/2025, 15:00:46"
+  const submittedAt = new Date();
+  const timestamp = formatIsoTimestamp(submittedAt);
 
   const data = {
     year: document.getElementById('yearSelect').value,
@@ -296,74 +376,24 @@ function submitMatch() {
     },
     body: JSON.stringify(data)
   })
-  .catch(() => {
-    // Ignore POST errors (including CORS)
+  .catch(error => {
+    console.error('Match submission failed:', error);
   })
-  .finally(() => {
-    setTimeout(() => {
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Matches';
-      fetch(sheetUrl)
-        .then(r => r.text())
-        .then(txt => {
-          const json = JSON.parse(txt.substring(47).slice(0, -2));
-          const rows = json.table.rows;
-          // Helper: parse "25/06/2025 15:00:46" or Google Date string to Date object
-          function parseSheetDate(c) {
-            if (!c[0]) return null;
-            if (c[0].f) {
-              // "25/06/2025 15:00:46"
-              const [d, m, y, h, mi, s] = c[0].f.match(/\d+/g).map(Number);
-              return new Date(y, m - 1, d, h, mi, s);
-            }
-            if (typeof c[0].v === "string" && c[0].v.startsWith("Date(")) {
-              // "Date(2025,5,25,15,0,45)"
-              const [y, m, d, h, mi, s] = c[0].v.match(/\d+/g).map(Number);
-              return new Date(y, m, d, h, mi, s);
-            }
-            return null;
-          }
-          // Parse our JS timestamp (from .toLocaleString()) to Date object
-          function parseLocalTimestamp(ts) {
-            // "25/06/2025, 15:00:46"
-            const [date, time] = ts.split(',');
-            if (!date || !time) return null;
-            const [d, m, y] = date.trim().split('/').map(Number);
-            const [h, mi, s] = time.trim().split(':').map(Number);
-            return new Date(y, m - 1, d, h, mi, s);
-          }
-          const sentDate = parseLocalTimestamp(timestamp);
-          let found = false;
-          for (const row of rows) {
-            const c = row.c;
-            if (!c) continue;
-            const rowA = c[1]?.v || "";
-            const rowB = c[2]?.v || "";
-            const rowWinner = c[8]?.v || "";
-            const rowDate = parseSheetDate(c);
-            if (
-              rowA === data.playerA &&
-              rowB === data.playerB &&
-              rowWinner === data.winner &&
-              rowDate && sentDate &&
-              Math.abs(rowDate.getTime() - sentDate.getTime()) <= 15000 // within 15 seconds
-            ) {
-              found = true;
-              break;
-            }
-          }
-          if (found) {
-            statusDiv.textContent = "Match Submmission Verified!";
-            statusDiv.style.color = "#FFD700";
-          } else {
-            statusDiv.textContent = "⚠️ Submission might have failed — could not verify.";
-            statusDiv.style.color = "#FFD700";
-          }
-        })
-        .catch(() => {
-          statusDiv.textContent = "⚠️ Submission sent, but could not verify in spreadsheet.";
-          statusDiv.style.color = "#FFD700";
-        });
-    }, 1000);
+  .finally(async () => {
+    try {
+      const found = await verifySubmission(data, submittedAt);
+      if (found) {
+        statusDiv.textContent = "Match submission verified!";
+        statusDiv.style.color = "#FFD700";
+      } else {
+        statusDiv.textContent = "⚠️ Submission sent, but verification timed out. Please check the sheet.";
+        statusDiv.style.color = "#FFD700";
+      }
+    } catch (error) {
+      console.error('Submission verification failed:', error);
+      statusDiv.textContent = "⚠️ Submission sent, but could not verify in spreadsheet.";
+      statusDiv.style.color = "#FFD700";
+    }
   });
 }
 
