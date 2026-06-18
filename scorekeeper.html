@@ -262,6 +262,11 @@ function formatIsoTimestamp(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
+function formatLegacyTimestamp(date) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 function parseSheetDate(cell) {
   if (!cell) return null;
 
@@ -344,7 +349,8 @@ function submitMatch() {
   }
 
   const submittedAt = new Date();
-  const timestamp = formatIsoTimestamp(submittedAt);
+  const timestamp = formatLegacyTimestamp(submittedAt);
+  const timestampIso = formatIsoTimestamp(submittedAt);
 
   const data = {
     year: document.getElementById('yearSelect').value,
@@ -354,7 +360,8 @@ function submitMatch() {
     winner: winsA === 3 ? getPlayer('A') : winsB === 3 ? getPlayer('B') : '',
     winnerRounds: Math.max(winsA, winsB),
     loserRounds: Math.min(winsA, winsB),
-    timestamp // for verification
+    timestamp,
+    timestampIso
   };
 
   // Show status to user
@@ -368,7 +375,8 @@ function submitMatch() {
   statusDiv.textContent = "⏳ Submission sent! Awaiting verification...";
   statusDiv.style.color = "#FFD700";
 
-  fetch("https://script.google.com/macros/s/AKfycbzv5Wnfyl7qRSFNH3tLDWUfDWxhELEWrzCqKWKYMw9Oi-YndfJOyYsSxA6DWJsxwYH4/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbx_nS_LcMMo6QdVVXNoMU7RPnxvJaOBHhmITXwzelLb3KeRO7PIiePcEsgoe6sM1zca/exec", {
+    mode: "no-cors",
     redirect: "follow",
     method: "POST",
     headers: {
