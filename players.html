@@ -83,7 +83,7 @@ fetch('nav.html')
         <th>Games Won</th>
         <th>Rounds Won</th>
         <th>Points Total</th>
-        <th>Performance</th>
+        <th>Player Stat</th>
       </tr>
     </thead>
     <tbody>
@@ -93,7 +93,9 @@ fetch('nav.html')
 
   <script>
     const MATCHES_URL = 'https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Matches';
-    const ENROLLED_2026 = [
+    const PLAYERS_URL = 'https://docs.google.com/spreadsheets/d/1DNBERSYTfFpNAyMX9yMESoNKgiHQb_7FHvx0mo694Ak/gviz/tq?tqx=out:json&sheet=Players';
+    const ENROLLED_BY_YEAR = {
+      2026: [
       'Hallie Robins',
       'Charles Fawcett',
       'Richard Gan',
@@ -112,7 +114,8 @@ fetch('nav.html')
       'Aydin Kilic',
       'Nhu Dinh',
       'Eric O\'Donnell'
-    ];
+      ]
+    };
 
     const yearSelect = document.getElementById('yearSelect');
     const tableBody = document.querySelector('#statsTable tbody');
@@ -161,15 +164,46 @@ fetch('nav.html')
       return { a, b };
     }
 
+    function parseGvizRows(text) {
+      const json = JSON.parse(text.substring(47).slice(0, -2));
+      return json.table.rows || [];
+    }
+
+    function toNumber(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      const normalized = String(value ?? '').replace(/[^\d.-]/g, '');
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function formatPlayerStat(value) {
+      return Number.isInteger(value) ? String(value) : value.toFixed(2);
+    }
+
     function loadYearStats(year) {
       tableBody.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
 
-      fetch(MATCHES_URL)
-        .then(res => res.text())
-        .then(txt => {
-          const json = JSON.parse(txt.substring(47).slice(0, -2));
-          const rows = json.table.rows;
+      Promise.all([
+        fetch(MATCHES_URL).then(res => res.text()),
+        fetch(PLAYERS_URL).then(res => res.text())
+      ])
+        .then(([matchesText, playersText]) => {
+          const rows = parseGvizRows(matchesText);
+          const playerRows = parseGvizRows(playersText);
           const stats = {};
+          const playerStatByName = {};
+
+          const allPlayerNames = playerRows
+            .map(row => String((row.c || [])[0]?.v || '').trim())
+            .filter(Boolean);
+
+          let roster = [...(ENROLLED_BY_YEAR[year] || [])];
+          if (year === '2025') {
+            const excludedNames = new Set(ENROLLED_BY_YEAR['2026'] || []);
+            roster = allPlayerNames.filter(name => !excludedNames.has(name));
+          }
+
+          const hasControlledRoster = year === '2025' || roster.length > 0;
 
           function ensurePlayer(name) {
             if (!name) return;
@@ -180,14 +214,25 @@ fetch('nav.html')
                 gamesWon: 0,
                 roundsWon: 0,
                 points: 0,
-                performance: 0
+                playerStat: 0
               };
             }
           }
 
-          if (year === '2026') {
-            ENROLLED_2026.forEach(ensurePlayer);
-          }
+          roster.forEach(ensurePlayer);
+
+          playerRows.forEach(row => {
+            const cells = row.c || [];
+            const name = String(cells[0]?.v || '').trim();
+            if (!name) return;
+
+            // Players sheet: column A = player name, column G = Player Stat.
+            playerStatByName[name] = toNumber(cells[6]?.v ?? cells[6]?.f ?? 0);
+
+            if (!hasControlledRoster) {
+              ensurePlayer(name);
+            }
+          });
 
           rows.forEach(row => {
             const cells = row.c || [];
@@ -200,8 +245,12 @@ fetch('nav.html')
               return;
             }
 
-            ensurePlayer(playerA);
-            ensurePlayer(playerB);
+            if (hasControlledRoster) {
+              if (!stats[playerA] || !stats[playerB]) return;
+            } else {
+              ensurePlayer(playerA);
+              ensurePlayer(playerB);
+            }
 
             if (!playerA || !playerB) return;
 
@@ -229,11 +278,11 @@ fetch('nav.html')
 
           const players = Object.values(stats)
             .map(p => {
-              p.performance = p.gamesPlayed ? p.gamesWon / p.gamesPlayed : 0;
+              p.playerStat = playerStatByName[p.name] ?? 0;
               return p;
             })
             .sort((a, b) => {
-              if (b.performance !== a.performance) return b.performance - a.performance;
+              if (b.playerStat !== a.playerStat) return b.playerStat - a.playerStat;
               if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
               if (b.roundsWon !== a.roundsWon) return b.roundsWon - a.roundsWon;
               if (b.points !== a.points) return b.points - a.points;
@@ -263,7 +312,7 @@ fetch('nav.html')
           <td>${p.gamesWon}</td>
           <td>${p.roundsWon}</td>
           <td>${p.points}</td>
-          <td>${p.performance.toFixed(2)}</td>
+          <td>${formatPlayerStat(p.playerStat)}</td>
         </tr>`;
         tableBody.insertAdjacentHTML('beforeend', row);
       });
